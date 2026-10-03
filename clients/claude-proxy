@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# claude-proxy [claude args] — run Claude Code through the local proxy.
+# Default: scratch config dir, so the real /login and ~/.claude are untouched.
+# LLM_PROXY_REAL_HOME=1 uses the real ~/.claude (still routed through the proxy).
+set -euo pipefail
+ROOT="${LLM_PROXY_HOME:-$HOME/personal/llm-proxy}"
+KEY="$(sed -n 's/^PROXY_API_KEY=//p' "$ROOT/.secrets")"   # only the client key, never the management key
+[ -n "$KEY" ] || { echo "no PROXY_API_KEY in $ROOT/.secrets (run ./run.sh once)" >&2; exit 1; }
+export ANTHROPIC_BASE_URL="${LLM_PROXY_URL:-http://127.0.0.1:8317}"
+export ANTHROPIC_AUTH_TOKEN="$KEY"
+unset ANTHROPIC_API_KEY
+if [ "${LLM_PROXY_REAL_HOME:-0}" != 1 ]; then
+  export CLAUDE_CONFIG_DIR="${LLM_PROXY_CLAUDE_HOME:-$HOME/.local/share/llm-proxy/claude-home}"
+  mkdir -p "$CLAUDE_CONFIG_DIR"
+fi
+exec claude "$@"

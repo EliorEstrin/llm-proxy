@@ -1,0 +1,18 @@
+# Rendered to config.yaml by run.sh (secrets filled from .secrets). Do not commit config.yaml.
+config-version: 8
+server:
+  host: "127.0.0.1"        # localhost only
+  port: 8317
+management:
+  allow-remote: false
+  secret-key: "@MGMT_SECRET@"
+  disable-control-panel: false  # serve OUR locally built panel (ui/management.html), see run.sh
+  disable-auto-update-panel: true  # never fetch a panel from GitHub
+access:
+  api-keys:
+    - "@PROXY_API_KEY@"         # the placeholder key Claude Code / Codex present to the proxy
+routing:
+  strategy: "round-robin"
+  session-affinity: true        # keep a conversation on one account (prompt cache)
+oauth:
+  auth-dir: "~/.cli-proxy-api"  # real logins live here, outside this repo

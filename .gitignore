@@ -1,0 +1,6 @@
+bin/
+config.yaml
+.secrets
+findings/*.raw.json
+*.log
+ui/management.html

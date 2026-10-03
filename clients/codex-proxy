@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# codex-proxy [codex args] — run Codex through the local proxy.
+# Default: scratch CODEX_HOME, so the real ~/.codex login and config are untouched.
+# LLM_PROXY_REAL_HOME=1 uses the real ~/.codex (still routed through the proxy).
+set -euo pipefail
+ROOT="${LLM_PROXY_HOME:-$HOME/personal/llm-proxy}"
+KEY="$(sed -n 's/^PROXY_API_KEY=//p' "$ROOT/.secrets")"
+[ -n "$KEY" ] || { echo "no PROXY_API_KEY in $ROOT/.secrets (run ./run.sh once)" >&2; exit 1; }
+URL="${LLM_PROXY_URL:-http://127.0.0.1:8317}"
+export LLM_PROXY_KEY="$KEY"
+if [ "${LLM_PROXY_REAL_HOME:-0}" != 1 ]; then
+  export CODEX_HOME="${LLM_PROXY_CODEX_HOME:-$HOME/.local/share/llm-proxy/codex-home}"
+  mkdir -p "$CODEX_HOME"
+fi
+exec codex \
+  -c "model_providers.llmproxy={ name = \"LLM Proxy\", base_url = \"$URL/v1\", wire_api = \"responses\", env_key = \"LLM_PROXY_KEY\" }" \
+  -c 'model_provider="llmproxy"' "$@"
