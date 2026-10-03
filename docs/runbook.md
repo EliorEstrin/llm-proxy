@@ -1,5 +1,39 @@
 # Runbook
 
+## Set up on a new machine
+Git carries only code and docs. The binary, the UI build, `.secrets` and the logins are per machine. Clone to
+`~/personal/llm-proxy`: the systemd unit and the wrappers expect that path.
+
+```
+git clone git@github.com:EliorEstrin/llm-proxy.git ~/personal/llm-proxy && cd ~/personal/llm-proxy
+
+# proxy binary: pinned release, checksum-verified (version in VERSION)
+mkdir -p bin && cd bin
+gh release download v8.0.13 -R router-for-me/CLIProxyAPI -p checksums.txt -p 'CLIProxyAPI_8.0.13_linux_amd64_no-plugin.tar.gz'
+grep linux_amd64_no-plugin checksums.txt | sha256sum -c - && tar -xzf CLIProxyAPI_8.0.13_linux_amd64_no-plugin.tar.gz
+cd ..
+
+# UI: built from source at the pinned tag (version in ui/VERSION)
+gh repo clone router-for-me/Cli-Proxy-API-Management-Center ~/ref/clones/Cli-Proxy-API-Management-Center
+(cd ~/ref/clones/Cli-Proxy-API-Management-Center && git checkout v1.25.3 && bun install --frozen-lockfile && bun run build)
+cp ~/ref/clones/Cli-Proxy-API-Management-Center/dist/index.html ui/management.html
+
+# wrappers on PATH
+ln -sf "$PWD/clients/claude-proxy" ~/.local/bin/claude-proxy
+ln -sf "$PWD/clients/codex-proxy"  ~/.local/bin/codex-proxy
+
+# service (first start generates this machine's own .secrets), then logins
+scripts/install-service.sh && scripts/check.sh up
+./run.sh -claude-login          # once per Claude account
+./run.sh -codex-device-login
+scripts/check.sh accounts
+```
+
+Logging in while the service runs is fine: the login is its own short process and the running proxy picks up the new
+credential file. Each machine's proxy is independent, with its own keys and UI. Keep each account on one proxy
+until open question 14 is answered. After a `git pull` that bumps `VERSION` or `ui/VERSION`, redo that step and
+`systemctl --user restart llm-proxy`.
+
 ## Start / stop
 `./run.sh` (foreground). First run generates `.secrets`. Stop with Ctrl-C (or `kill` its PID — don't `pkill -f` from a shell that also matches its own command line).
 
