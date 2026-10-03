@@ -23,7 +23,7 @@ for f in fs: print("-",f.get("provider"),f.get("label") or f.get("name"),"status
       claude) m=$("$0" models | grep -i -m1 claude); echo "model: $m"
         curl -s "$URL/v1/messages" -H "x-api-key: $CK" -H "anthropic-version: 2023-06-01" -H "content-type: application/json" \
           -d "{\"model\":\"$m\",\"max_tokens\":32,\"messages\":[{\"role\":\"user\",\"content\":\"say hi\"}]}" ;;
-      codex) m=$("$0" models | grep -i -m1 -E 'gpt|codex'); echo "model: $m"
+      codex) m=$("$0" models | grep -i -E 'gpt|codex' | grep -v -i -E 'image|review' | head -1); echo "model: $m"  # image models only serve /v1/images
         curl -s "$URL/v1/chat/completions" -H "Authorization: Bearer $CK" -H "content-type: application/json" \
           -d "{\"model\":\"$m\",\"max_tokens\":32,\"messages\":[{\"role\":\"user\",\"content\":\"say hi\"}]}" ;;
       *) echo "claude|codex"; exit 2 ;;
