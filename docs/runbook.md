@@ -15,7 +15,8 @@ cd ..
 
 # UI: built from source at the pinned tag (version in ui/VERSION)
 gh repo clone router-for-me/Cli-Proxy-API-Management-Center ~/ref/clones/Cli-Proxy-API-Management-Center
-(cd ~/ref/clones/Cli-Proxy-API-Management-Center && git checkout v1.25.3 && bun install --frozen-lockfile && bun run build)
+(cd ~/ref/clones/Cli-Proxy-API-Management-Center && git checkout v1.25.3 && git apply ~/personal/llm-proxy/ui/patches/*.patch \
+  && bun install --frozen-lockfile && bun run build)
 cp ~/ref/clones/Cli-Proxy-API-Management-Center/dist/index.html ui/management.html
 
 # wrappers on PATH
@@ -63,7 +64,9 @@ Remove the lines added in step 3 (or restore the backups) — tools go back to t
 
 ## Upgrade
 Download the new release asset + `checksums.txt`, verify `sha256sum -c`, replace `bin/`, bump `VERSION`. UI: checkout the new tag in
-`~/ref/clones/Cli-Proxy-API-Management-Center`, `bun install --frozen-lockfile && bun run build`, copy `dist/index.html` to `ui/management.html`, bump `ui/VERSION`.
+`~/ref/clones/Cli-Proxy-API-Management-Center` (`git checkout -- .` first to drop the old patch), `git apply ~/personal/llm-proxy/ui/patches/*.patch`,
+`bun install --frozen-lockfile && bun run build`, copy `dist/index.html` to `ui/management.html`, bump `ui/VERSION`. If a patch no longer
+applies, refresh it against the new tag or delete it — without it the stock UI comes back with every provider.
 
 ## Other machines later (agent VM, servers)
 They cannot reach this localhost. Options: Tailscale (join + set URL, proxy bound to the tailnet address) or an SSH reverse tunnel.

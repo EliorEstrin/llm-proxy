@@ -1,0 +1,90 @@
+diff --git a/src/features/providers/descriptors.ts b/src/features/providers/descriptors.ts
+index ccbb811..d702fb7 100644
+--- a/src/features/providers/descriptors.ts
++++ b/src/features/providers/descriptors.ts
+@@ -287,17 +287,5 @@ export const getProviderModelCapabilities = (brand: ProviderBrand): ProviderMode
+   modalities: brand === 'openaiCompatibility',
+ });
+ 
+-export const PROVIDER_BRAND_ORDER: ProviderBrand[] = [
+-  'kimi',
+-  'gemini',
+-  'interactions',
+-  'codex',
+-  'meta',
+-  'xai',
+-  'claude',
+-  'vertex',
+-  'openaiCompatibility',
+-  'apikeyFun',
+-  'fennoAI',
+-  'qiniuCloud',
+-];
++// llm-proxy patch: only the providers we use (Claude, Codex).
++export const PROVIDER_BRAND_ORDER: ProviderBrand[] = ['claude', 'codex'];
+diff --git a/src/features/quota/constants.ts b/src/features/quota/constants.ts
+index b5252af..5ec54e8 100644
+--- a/src/features/quota/constants.ts
++++ b/src/features/quota/constants.ts
+@@ -1,15 +1,8 @@
+ import type { QuotaProviderType } from './providers/types';
+ 
+ /** tab 顺序 = 旧页五分区的纵向顺序，'全部' tab 下卡片也按此分组排列。 */
+-export const QUOTA_TAB_ORDER: readonly QuotaProviderType[] = [
+-  'claude',
+-  'antigravity',
+-  'codex',
+-  'xai',
+-  'kimi',
+-  'devin',
+-  'meta',
+-];
++// llm-proxy patch: only the providers we use (Claude, Codex).
++export const QUOTA_TAB_ORDER: readonly QuotaProviderType[] = ['claude', 'codex'];
+ 
+ export type QuotaTabId = 'all' | QuotaProviderType;
+ 
+diff --git a/src/pages/OAuthPage.tsx b/src/pages/OAuthPage.tsx
+index cbb4b7d..1f1c4f4 100644
+--- a/src/pages/OAuthPage.tsx
++++ b/src/pages/OAuthPage.tsx
+@@ -84,7 +84,7 @@ function getErrorStatus(error: unknown): number | undefined {
+   return typeof error.status === 'number' ? error.status : undefined;
+ }
+ 
+-const PROVIDERS: BuiltInOAuthProviderCard[] = [
++const ALL_PROVIDERS: BuiltInOAuthProviderCard[] = [
+   {
+     kind: 'builtin',
+     id: 'meta',
+@@ -135,6 +135,10 @@ const PROVIDERS: BuiltInOAuthProviderCard[] = [
+   },
+ ];
+ 
++// llm-proxy patch: only the providers we use (Claude, Codex).
++const SHOW_VERTEX_IMPORT = false as boolean;
++const PROVIDERS = ALL_PROVIDERS.filter((provider) => ['anthropic', 'codex'].includes(provider.id));
++
+ const BUILTIN_PROVIDER_IDS = new Set<string>(PROVIDERS.map((provider) => provider.id));
+ const CALLBACK_SUPPORTED = new Set<string>(['codex', 'anthropic', 'antigravity', 'xai', 'devin']);
+ const XAI_CALLBACK_URL = 'http://127.0.0.1:56121/callback';
+@@ -877,8 +881,8 @@ export function OAuthPage() {
+           </div>
+         </section>
+ 
+-        {/* Vertex JSON 登录 */}
+-        <section className={styles.providerSection}>
++        {/* Vertex JSON 登录 — hidden by the llm-proxy patch */}
++        {SHOW_VERTEX_IMPORT && (<section className={styles.providerSection}>
+           <h2 className={styles.sectionTitle}>{t('auth_login.other_login_methods')}</h2>
+           <Card
+             title={
+@@ -970,7 +974,7 @@ export function OAuthPage() {
+               )}
+             </div>
+           </Card>
+-        </section>
++        </section>)}
+       </div>
+     </div>
+   );
