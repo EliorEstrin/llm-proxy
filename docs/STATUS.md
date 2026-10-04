@@ -27,6 +27,8 @@
   Upstream exempts only the OpenAI equivalent (`internal/clienterror/client_error.go` `IsItemNotPersisted`; 12 h in
   `sdk/cliproxy/auth/conductor_cooldown.go`, v8.0.13 = latest). A locked model also disappears from `/v1/models`. Fixed for us by
   `scripts/unstick.sh` (service `llm-proxy-unstick`), which resets 404 cooldowns via `POST /v8/management/routing/cooldown/reset`.
+  Upstream: issue router-for-me/CLIProxyAPI#6344, fix PRs #6345 and #6265 (open, unreleased as of 2026-10-05). On an upgrade that
+  includes them, retire the watchdog: `systemctl --user disable --now llm-proxy-unstick`, delete the script, unit and these notes.
 - **Counters are in memory.** Per-account success/failed counts reset to 0 when the proxy restarts. `quota` fills in only after a request has gone through that account.
 - **`scripts/check.sh direct codex` used to pick an image model** (`gpt-image-2.5-flare`), which the chat endpoint rejects. Fixed: it now skips image/review models.
 - **Round-robin did not alternate in testing.** Consecutive Claude requests went to the same account until it was disabled. Session affinity may explain it; not investigated.
