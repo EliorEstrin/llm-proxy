@@ -48,6 +48,17 @@ Each login creates one credential file in `~/.cli-proxy-api/`. Verify: `scripts/
 ## UI
 http://127.0.0.1:8317/management.html — management key is `MGMT_SECRET` in `.secrets`.
 
+## Claude Code fails with `503 auth_unavailable` on one model
+Symptom: one model (seen: `claude-sonnet-5-5`) answers instantly with `503 auth_unavailable: no auth available ... last upstream
+error: not_found_error: No thread state was found for the requested previous_message_id`, while other models work. The proxy
+locked that model on every account for 12 h after Anthropic returned a 404 `thread_not_found` (see STATUS findings).
+`llm-proxy-unstick` clears it within ~10 s, so this should not stay visible. If it does:
+```
+systemctl --user status llm-proxy-unstick; journalctl --user -u llm-proxy-unstick -n 20   # is the watchdog running?
+scripts/unstick.sh --once                                                                 # clear now, by hand
+```
+Lockouts are visible per account in the `cooldowns` field of `GET /v0/management/auth-files`. A restart also clears them (in memory).
+
 ## Test the clients (phase 1)
 `clients/claude-proxy` and `clients/codex-proxy` (linked into `~/.local/bin`) use scratch homes by default, so the real login is untouched.
 `LLM_PROXY_REAL_HOME=1` uses the real config dir instead (still proxy-routed). Then follow `docs/test-plan.md`.

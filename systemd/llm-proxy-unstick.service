@@ -1,0 +1,13 @@
+[Unit]
+Description=Clears false 404 model lockouts in the LLM proxy (see scripts/unstick.sh)
+After=llm-proxy.service
+PartOf=llm-proxy.service
+
+[Service]
+WorkingDirectory=%h/personal/llm-proxy
+ExecStart=%h/personal/llm-proxy/scripts/unstick.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=llm-proxy.service

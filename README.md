@@ -28,7 +28,8 @@ See [`docs/STATUS.md`](docs/STATUS.md) for the live checklist.
 | `ui/management.html` | Our own build of the proxy's management UI (version in `ui/VERSION`) |
 | `clients/` | `claude-proxy`, `codex-proxy` wrappers for the test phase |
 | `scripts/check.sh` | Verification helper (up / accounts / models / direct) |
-| `systemd/` | User service for the permanent setup (not installed until tests pass) |
+| `scripts/unstick.sh` | Watchdog: clears false 404 model lockouts (runs as `llm-proxy-unstick`) |
+| `systemd/` | User services: the proxy and the 404-lockout watchdog |
 | `dashboard/` | Our own dashboard, only if the stock UI falls short |
 | `findings/` | Management-API dumps from the test phase (tokens stripped) |
 
