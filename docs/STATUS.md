@@ -1,6 +1,6 @@
 # Status
 
-**Phase:** 1 — accounts logged in, test plan run, proxy running as a user service (2026-10-03). Plain `claude`/`codex` not cut over yet; use `claude-proxy`/`codex-proxy`.
+**Phase:** 1 — accounts logged in, test plan run, proxy running as a user service (2026-10-03). Cutover done 2026-10-05: plain `claude`/`codex` go through the proxy.
 
 | Item | State | Evidence |
 |---|---|---|
@@ -16,8 +16,8 @@
 | Test 6 account control | passed: disabling one Claude account via `PATCH /v0/management/auth-files/status` moved the next request to the other (count +1 there, none on the disabled one) | 2026-10-03 |
 | Test 7 failure is visible | **partial**: no silent fallback to the old login, but with the proxy down `claude-proxy -p` produced no output and hung until a 60 s timeout (exit 124) — not a clear error | 2026-10-03 |
 | Test 8 data for a dashboard | passed: after one request `quota` is populated for Claude (Anthropic unified 5h/7d status, utilization, reset) and Codex (plan, credits, limits), per account and per model | 2026-10-03 |
-| systemd unit | **installed and enabled** on this workstation; comes up with all 3 accounts | `systemctl --user status llm-proxy`, 2026-10-03 |
-| Cutover of plain `claude`/`codex` | not started | `docs/runbook.md` |
+| systemd unit | **installed and enabled** on this workstation (reinstalled 2026-10-04; accounts re-logged in, 3 total) | `systemctl --user status llm-proxy`, 2026-10-03 |
+| Cutover of plain `claude`/`codex` | **done, verified live**: plain `claude -p` and `codex exec` answered and the per-account counts rose. Backups: `~/.claude/settings.json.bak-20261004-235947`, `~/.codex/config.toml.bak-20261004-235947`. Codex reads `LLM_PROXY_KEY`, exported from `~/.zshenv` | 2026-10-05 |
 
 ## Findings worth knowing
 - **Counters are in memory.** Per-account success/failed counts reset to 0 when the proxy restarts. `quota` fills in only after a request has gone through that account.
