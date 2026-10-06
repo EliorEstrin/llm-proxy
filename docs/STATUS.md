@@ -1,6 +1,8 @@
 # Status
 
-**Phase:** 1 — accounts logged in, test plan run, proxy running as a user service (2026-10-03). Cutover done 2026-10-05: plain `claude`/`codex` go through the proxy.
+**Phase:** **paused 2026-10-06.** Claude Code and Codex are back on native logins; `llm-proxy` and `llm-proxy-unstick` are stopped and disabled. Logins, config and this repo are kept. Resume: `systemctl --user enable --now llm-proxy llm-proxy-unstick`, then point a client at it (`claude-proxy`/`codex-proxy`, or an agent-runner `[hosts.<name>.proxy]` table) — never through `~/.claude/settings.json`; see decisions.
+
+Previously: phase 1 done 2026-10-03, cutover of plain `claude`/`codex` 2026-10-05, undone 2026-10-06.
 
 | Item | State | Evidence |
 |---|---|---|
@@ -16,11 +18,18 @@
 | Test 6 account control | passed: disabling one Claude account via `PATCH /v0/management/auth-files/status` moved the next request to the other (count +1 there, none on the disabled one) | 2026-10-03 |
 | Test 7 failure is visible | **partial**: no silent fallback to the old login, but with the proxy down `claude-proxy -p` produced no output and hung until a 60 s timeout (exit 124) — not a clear error | 2026-10-03 |
 | Test 8 data for a dashboard | passed: after one request `quota` is populated for Claude (Anthropic unified 5h/7d status, utilization, reset) and Codex (plan, credits, limits), per account and per model | 2026-10-03 |
-| systemd unit | **installed and enabled** on this workstation (reinstalled 2026-10-04; accounts re-logged in, 3 total) | `systemctl --user status llm-proxy`, 2026-10-03 |
+| systemd unit | **stopped and disabled 2026-10-06** (was installed and enabled) on this workstation (reinstalled 2026-10-04; accounts re-logged in, 3 total) | `systemctl --user status llm-proxy`, 2026-10-03 |
 | 404 lockout watchdog `llm-proxy-unstick` | **installed, verified live**: a 404 locked a model on both accounts (then 503); the service cleared both within 10 s; Sonnet/Opus 200 after | `journalctl --user -u llm-proxy-unstick`, 2026-10-05 |
-| Cutover of plain `claude`/`codex` | **done, verified live**: plain `claude -p` and `codex exec` answered and the per-account counts rose. Backups: `~/.claude/settings.json.bak-20261004-235947`, `~/.codex/config.toml.bak-20261004-235947`. Codex reads `LLM_PROXY_KEY`, exported from `~/.zshenv` | 2026-10-05 |
+| Cutover of plain `claude`/`codex` | **undone 2026-10-06** (was done, verified live): plain `claude -p` and `codex exec` answered and the per-account counts rose. Backups: `~/.claude/settings.json.bak-20261004-235947`, `~/.codex/config.toml.bak-20261004-235947`. Codex reads `LLM_PROXY_KEY`, exported from `~/.zshenv` | 2026-10-05 |
 
 ## Findings worth knowing
+- **Claude Code Remote Control cannot run behind any proxy.** `claude remote-control` exits at once with "only available when using
+  Claude via api.anthropic.com" when `ANTHROPIC_BASE_URL` points elsewhere. `~/.claude/settings.json` `env` applies to every `claude`
+  process, including the `claude-rc@*` services, so the 2026-10-05 cutover crash-looped them (1000+ restarts) until 2026-10-06. A
+  `--settings` override and a process-environment override both lose to the user settings file (tested 2026-10-06). Any proxy for
+  Claude must be opt-in per launcher, never global.
+- **A proxy configured in several places drifts silently.** The agent-runner `[hosts.local.proxy]` table was lost from its config on
+  2026-10-05 ~13:46 after two proxied runs; ~50 runs since went direct with the switch still reading "on".
 - **Any upstream 404 locks a model for 12 h, and Anthropic's `thread_not_found` is a 404.** On 2026-10-05 Claude Code continued a conversation
   whose server-side thread was not on the chosen account; Anthropic answered 404, the proxy tried the other account (same 404), and
   `claude-sonnet-5-5` was dead on both accounts: every Sonnet request (including subagents) got an instant 503 while Opus worked.
